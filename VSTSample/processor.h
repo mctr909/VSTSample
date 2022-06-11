@@ -14,7 +14,7 @@ namespace Steinberg {
 		class MyVSTProcessor : public AudioEffect
 		{
 		protected:
-			ParamValue volume = {0};
+			ParamValue masterVolume = {0};
 
 		public:
 			// コンストラクタ
@@ -22,6 +22,9 @@ namespace Steinberg {
 
 			// クラスを初期化する関数(必須)
 			tresult PLUGIN_API initialize(FUnknown* context);
+
+			// クラスを解放する関数
+			tresult PLUGIN_API terminate();
 
 			// バス構成を設定する関数。
 			tresult PLUGIN_API setBusArrangements(SpeakerArrangement* inputs, int32 numIns, SpeakerArrangement* outputs, int32 numOuts);

@@ -27,6 +27,12 @@
     <ClInclude Include="processor.h">
       <Filter>ヘッダファイル</Filter>
     </ClInclude>
+    <ClInclude Include="channel.h">
+      <Filter>ヘッダファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="sampler.h">
+      <Filter>ヘッダファイル</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="ソースファイル">

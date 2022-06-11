@@ -3,6 +3,8 @@
 #include "myvst3fuid.h"
 #include "processor.h"
 #include "controller.h"
+#include "channel.h"
+#include "sampler.h"
 
 // VST3作成に必要なの名前空間を使用
 namespace Steinberg {
@@ -11,8 +13,7 @@ namespace Steinberg {
 		// =================================================================================
 		// コンストラクタ
 		// =================================================================================
-		MyVSTProcessor::MyVSTProcessor()
-		{
+		MyVSTProcessor::MyVSTProcessor() {
 			// コントローラーのFUIDを設定する
 			setControllerClass(ControllerUID);
 		}
@@ -20,12 +21,10 @@ namespace Steinberg {
 		// ===================================================================================
 		// クラスを初期化する関数
 		// ===================================================================================
-		tresult PLUGIN_API MyVSTProcessor::initialize(FUnknown* context)
-		{
+		tresult PLUGIN_API MyVSTProcessor::initialize(FUnknown* context) {
 			// まず継承元クラスの初期化を実施
 			tresult result = AudioEffect::initialize(context);
-			if (result == kResultTrue)
-			{
+			if (result == kResultTrue) {
 				// 入力と出力を設定
 				addAudioInput(STR16("AudioInput"), SpeakerArr::kStereo);
 				addAudioOutput(STR16("AudioOutput"), SpeakerArr::kStereo);
@@ -34,20 +33,34 @@ namespace Steinberg {
 				addEventInput(STR16("Event Input"), 1);
 
 				// 以下固有の初期化を実施。
-
-				// 今回は何もしない
+				for (int i = 0; i < CHANNEL_COUNT; i++) {
+					gppChannels[i] = new Channel();
+				}
+				for (int i = 0; i < SAMPLER_COUNT; i++) {
+					gppSamplers[i] = new Sampler();
+				}
 			}
-
 
 			// 初期化が成功すればkResultTrueを返す。
 			return result;
 		}
 
-		tresult PLUGIN_API MyVSTProcessor::setBusArrangements(SpeakerArrangement* inputs, int32 numIns, SpeakerArrangement* outputs, int32 numOuts)
-		{
+		// ===================================================================================
+		// クラスを解放する関数
+		// ===================================================================================
+		tresult PLUGIN_API MyVSTProcessor::terminate() {
+			for (int i = 0; i < CHANNEL_COUNT; i++) {
+				delete gppChannels[i];
+			}
+			for (int i = 0; i < SAMPLER_COUNT; i++) {
+				delete gppSamplers[i];
+			}
+			return kResultTrue;
+		}
+
+		tresult PLUGIN_API MyVSTProcessor::setBusArrangements(SpeakerArrangement* inputs, int32 numIns, SpeakerArrangement* outputs, int32 numOuts) {
 			// inputとoutputのバスが1つずつで、かつinputとoutputの構成がステレオの場合
-			if (numIns == 1 && numOuts == 1 && inputs[0] == SpeakerArr::kStereo && outputs[0] == SpeakerArr::kStereo)
-			{
+			if (numIns == 1 && numOuts == 1 && inputs[0] == SpeakerArr::kStereo && outputs[0] == SpeakerArr::kStereo) {
 				return AudioEffect::setBusArrangements(inputs, numIns, outputs, numOuts);
 			}
 
@@ -55,33 +68,30 @@ namespace Steinberg {
 			return kResultFalse;
 		}
 
-		tresult PLUGIN_API MyVSTProcessor::setState(IBStream* state)
-		{
+		tresult PLUGIN_API MyVSTProcessor::setState(IBStream* state) {
 			// 現在のProcessorクラスの状態を読込
 			// マルチプラットフォーム対応にする場合はエンディアンに注意
 
 			// 保存されているデータを読み込む
 			// 保存されているデータが複数ある場合はstate->readを繰り返す
-			//tresult res;
-			//res = state->read(&value, sizeof(ParamValue));
-			//if (res != kResultOk)
-			//{
-			//	// 読込に失敗した場合はkResultFalseを返す。
-			//	return kResultFalse;
-			//}
+			tresult res;
+			res = state->read(&masterVolume, sizeof(ParamValue));
+			if (res != kResultOk) {
+				// 読込に失敗した場合はkResultFalseを返す。
+				return kResultFalse;
+			}
 
 			// 関数の処理に問題がなければkResultOkを返す
 			return kResultOk;
 		}
 
-		tresult PLUGIN_API MyVSTProcessor::getState(IBStream* state)
-		{
+		tresult PLUGIN_API MyVSTProcessor::getState(IBStream* state) {
 			// 現在のProcessorクラスの状態を保存
 			// マルチプラットフォーム対応にする場合はエンディアンに注意
 
 			// データを保存する
 			// 保存したいデータが複数ある場合はstate->writeを繰り返す。
-			//state->write(&value, sizeof(ParamValue));
+			state->write(&masterVolume, sizeof(ParamValue));
 
 			// 関数の処理に問題がなければkResultOkを返す
 			return kResultOk;
@@ -90,25 +100,21 @@ namespace Steinberg {
 		// ===================================================================================
 		// 音声信号を処理する関数
 		// ===================================================================================
-		tresult PLUGIN_API MyVSTProcessor::process(ProcessData& data)
-		{
+		tresult PLUGIN_API MyVSTProcessor::process(ProcessData& data) {
 			// パラメーター変更の処理
 			// 与えられたパラメーターがあるとき、dataのinputParameterChangesに
 			// IParameterChangesクラスへのポインタのアドレスが入る
-			if (data.inputParameterChanges != NULL)
-			{
+			if (data.inputParameterChanges != NULL) {
 				// 与えられたパラメーターの数を取得
 				int32 paramChangeCount = data.inputParameterChanges->getParameterCount();
 
 				// 与えられたパラメーター分、処理を繰り返す。
-				for (int32 i = 0; i < paramChangeCount; i++)
-				{
+				for (int32 i = 0; i < paramChangeCount; i++) {
 					// パラメーター変更のキューを取得
 					// (処理するサンプル内に複数のパラメーター変更情報がある可能性があるため、
 					// キューという形になっている。)
 					IParamValueQueue* queue = data.inputParameterChanges->getParameterData(i);
-					if (queue != NULL)
-					{
+					if (queue != NULL) {
 						// どのパラメーターが変更されたか知るため、パラメーターtagを取得
 						int32 tag = queue->getParameterId();
 
@@ -118,14 +124,12 @@ namespace Steinberg {
 						int32 sampleOffset;
 
 						// 最後に変更された値を取得
-						if (queue->getPoint(valueChangeCount - 1, sampleOffset, value) == kResultTrue)
-						{
+						if (queue->getPoint(valueChangeCount - 1, sampleOffset, value) == kResultTrue) {
 							// tagに応じた処理を実施
-							switch (tag)
-							{
-							case PARAM1_TAG:
+							switch (tag) {
+							case PARAM_TAG_MASTER_VOLUME:
 								// volumeはメンバー変数としてあらかじめ定義・初期化しておく。
-								volume = value;
+								masterVolume = value;
 								break;
 							}
 						}
@@ -137,23 +141,19 @@ namespace Steinberg {
 			// 与えられたイベントがあるときdataのinputEventsに
 			// IEventListクラスへのポインタのアドレスが入る
 			IEventList* eventList = data.inputEvents;
-			if (eventList != NULL)
-			{
+			if (eventList != NULL) {
 				// イベントの数を取得する。
 				int32 numEvent = eventList->getEventCount();
-				for (int32 i = 0; i < numEvent; i++)
-				{
+				for (int32 i = 0; i < numEvent; i++) {
 					// i番目のイベントデータを取得する
 					Event event;
-					if (eventList->getEvent(i, event) == kResultOk)
-					{
+					if (eventList->getEvent(i, event) == kResultOk) {
 						int16 channel;
 						int16 noteNo;
 						float velocity;
 
 						// イベントデータのタイプごとに振り分け
-						switch (event.type)
-						{
+						switch (event.type) {
 						case Event::kNoteOnEvent: // ノートオンイベントの場合
 							channel = event.noteOn.channel;
 							noteNo = event.noteOn.pitch;
@@ -182,64 +182,64 @@ namespace Steinberg {
 			Sample32* outL = data.outputs[0].channelBuffers32[0];
 			Sample32* outR = data.outputs[0].channelBuffers32[1];
 
+			memset(outL, 0, sizeof(Sample32) * data.numSamples);
+			memset(outR, 0, sizeof(Sample32) * data.numSamples);
+
 			// numSamplesで示されるサンプル分、音声を処理する
-			for (int32 i = 0; i < data.numSamples; i++)
-			{
-				outL[i] = inL[i];
-				outR[i] = inR[i];
+			for (int s = 0; s < SAMPLER_COUNT; s++) {
+				auto pSmpl = gppSamplers[s];
+				if (pSmpl->state < SAMPLER_STATE::ACTIVE) {
+					break;
+				}
+				for (int32 i = 0; i < data.numSamples; i++) {
+					pSmpl->re -= pSmpl->im * pSmpl->delta * 6.28;
+					pSmpl->im += pSmpl->re * pSmpl->delta * 6.28;
+					outL[i] += pSmpl->re * pSmpl->gain;
+					outR[i] += pSmpl->im * pSmpl->gain;
+				}
 			}
 
 			// 問題なければkResultTrueを返す(おそらく必ずkResultTrueを返す)
 			return kResultTrue;
 		}
 
-		void MyVSTProcessor::onNoteOn(int channel, int note, float velocity)
-		{
+		void MyVSTProcessor::onNoteOn(int channel, int note, float velocity) {
 			// MIDIノートオンイベントの処理を行う
-
-			// 簡単なサンプルなので、channelとvelocityは無視する
-
-			// 押されたノートから、音程を計算
-			// ノートNo.69が440Hzになる。これを基準に計算する。
-			// 計算式の詳細説明については割愛
-			float pitch = (440.0f * powf(2.0f, (float)(note - (69)) / 12.0));
-
-			// pitchListの最後に追加する
-			//pitchList.push_back(pitch);
-
-			// ボリュームが0.0fだと音が出ないのでを1.0fにしておく
-			volume = 1.0f;
-
+			//if (0 == velocity) {
+			//	onNoteOff(channel, note, velocity);
+			//	return;
+			//}
+			for (int i = 0; i < SAMPLER_COUNT; i++) {
+				auto pSmpl = gppSamplers[i];
+				if (pSmpl->channelNumber == channel && pSmpl->noteNumber == note && SAMPLER_STATE::ACTIVE <= pSmpl->state) {
+					pSmpl->state = SAMPLER_STATE::PURGE;
+				}
+			}
+			for (int i = 0; i < SAMPLER_COUNT; i++) {
+				auto pSmpl = gppSamplers[i];
+				if (pSmpl->state == SAMPLER_STATE::FREE) {
+					pSmpl->state = SAMPLER_STATE::RESERVED;
+					pSmpl->channelNumber = channel;
+					pSmpl->noteNumber = note;
+					// 押されたノートから、音程を計算
+					// ノートNo.69が440Hzになる。これを基準に計算する。
+					// 計算式の詳細説明については割愛
+					pSmpl->delta = (440.0f * powf(2.0f, (float)(note - (69)) / 12.0) / 44100.0f);
+					pSmpl->gain = velocity;
+					pSmpl->state = SAMPLER_STATE::ACTIVE;
+					break;
+				}
+			}
 		}
 
-		void MyVSTProcessor::onNoteOff(int channel, int note, float velocity)
-		{
+		void MyVSTProcessor::onNoteOff(int channel, int note, float velocity) {
 			// MIDIノートオフイベントの処理を行う
-
-			// 簡単なサンプルなので、channelとvelocityは無視する
-
-			// 押されたノートから、音程を計算
-			float pitch = (440.0f * powf(2.0f, (float)(note - (69)) / 12.0));
-
-			// pitchListを最初から検索し、pitchに合致するものを削除する
-			//for (int i = 0; i < (int)pitchList.size(); i++)
-			//{
-			//	if (pitchList[i] == pitch)
-			//	{
-			//		// pitchと合致するものがあった場合、
-			//		// 該当するデータを取り除いて検索を終了する
-			//		pitchList.erase(pitchList.begin() + i);
-			//		break;
-			//	}
-			//}
-
-			// pitchListのサイズが0の場合、つまり押されたノートがない場合、
-			// ボリュームを0.0fにして音を消す
-			//if (pitchList.size() == 0)
-			//{
-			//	volume = 0.0f;
-			//}
-
+			for (int i = 0; i < SAMPLER_COUNT; i++) {
+				auto pSmpl = gppSamplers[i];
+				if (pSmpl->channelNumber == channel && pSmpl->noteNumber == note) {
+					pSmpl->state = SAMPLER_STATE::FREE;
+				}
+			}
 		}
 	}
 }

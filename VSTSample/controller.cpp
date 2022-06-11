@@ -15,7 +15,7 @@ namespace Steinberg {
 			if (result == kResultTrue)
 			{
 				// パラメーターを追加
-				parameters.addParameter(STR16("param1"), STR16("..."), 0, 1, ParameterInfo::kCanAutomate, PARAM1_TAG);
+				parameters.addParameter(STR16("param1"), STR16("..."), 0, 1, ParameterInfo::kCanAutomate, PARAM_TAG_MASTER_VOLUME);
 
 				// 以下固有の初期化を実施。
 
@@ -35,17 +35,17 @@ namespace Steinberg {
 
 			// 保存されているデータを読み込む
 			// 保存されているデータが複数ある場合はstate->readを繰り返す
-			//ParamValue value;
-			//res = state->read(&value, sizeof(ParamValue));
-			//if (res != kResultOk)
-			//{
-			//	// 読込に失敗した場合はkResultFalseを返す。
-			//	return kResultFalse;
-			//}
+			ParamValue value;
+			res = state->read(&value, sizeof(ParamValue));
+			if (res != kResultOk)
+			{
+				// 読込に失敗した場合はkResultFalseを返す。
+				return kResultFalse;
+			}
 			// 読み込まれたデータをパラメーターに反映する
 			// 反映するデータは0.0～1.0の範囲にしておく
-			//value = plainParamToNormalized(PARAM1_TAG, value);
-			//setParamNormalized(PARAM1_TAG, value);
+			value = plainParamToNormalized(PARAM_TAG_MASTER_VOLUME, value);
+			setParamNormalized(PARAM_TAG_MASTER_VOLUME, value);
 
 			// 関数の処理に問題がなければkResultOkを返す
 			return kResultOk;
@@ -60,10 +60,9 @@ namespace Steinberg {
 			// busIndexやchannelを使用して条件分けする
 			switch (midiControllerNumber)
 			{
-			case kCtrlExpression:
 			case kCtrlVolume:
-				// 関連付けるパラメーターがある場合、kResultTrueを返す
-				id = PARAM1_TAG;
+				return kResultTrue;
+			case kCtrlExpression:
 				return kResultTrue;
 			}
 

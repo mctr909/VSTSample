@@ -1,4 +1,3 @@
-#pragma once
 // VST3 SDKのインクルードファイル
 #include "pluginterfaces\base\funknown.h"
 

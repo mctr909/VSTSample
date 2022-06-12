@@ -34,10 +34,10 @@ namespace Steinberg {
 
 				// 以下固有の初期化を実施。
 				for (int i = 0; i < CHANNEL_COUNT; i++) {
-					gppChannels[i] = new Channel();
+					Channel::List[i] = new Channel();
 				}
 				for (int i = 0; i < SAMPLER_COUNT; i++) {
-					gppSamplers[i] = new Sampler();
+					Sampler::List[i] = new Sampler();
 				}
 			}
 
@@ -50,10 +50,10 @@ namespace Steinberg {
 		// ===================================================================================
 		tresult PLUGIN_API MyVSTProcessor::terminate() {
 			for (int i = 0; i < CHANNEL_COUNT; i++) {
-				delete gppChannels[i];
+				delete Channel::List[i];
 			}
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
-				delete gppSamplers[i];
+				delete Sampler::List[i];
 			}
 			return kResultTrue;
 		}
@@ -149,23 +149,17 @@ namespace Steinberg {
 					Event event;
 					if (eventList->getEvent(i, event) == kResultOk) {
 						int16 channel;
-						int16 noteNo;
-						float velocity;
 
 						// イベントデータのタイプごとに振り分け
 						switch (event.type) {
 						case Event::kNoteOnEvent: // ノートオンイベントの場合
 							channel = event.noteOn.channel;
-							noteNo = event.noteOn.pitch;
-							velocity = event.noteOn.velocity;
-							onNoteOn(channel, noteNo, velocity);
+							onNoteOn(channel, event.noteOn.pitch, event.noteOn.velocity);
 							break;
 
 						case Event::kNoteOffEvent: // ノートオフイベントの場合
 							channel = event.noteOff.channel;
-							noteNo = event.noteOff.pitch;
-							velocity = event.noteOff.velocity;
-							onNoteOff(channel, noteNo, velocity);
+							onNoteOff(channel, event.noteOff.pitch, event.noteOff.velocity);
 							break;
 						}
 					}
@@ -177,26 +171,18 @@ namespace Steinberg {
 			// 今回はAudioBusは1つだけなので 0 のみとなる
 			// channelBuffers32は32bit浮動小数点型のバッファで音声信号のチャンネル数分ある
 			// モノラル(kMono)なら 0 のみで、ステレオ(kStereo)なら 0(Left) と 1(Right) となる
-			Sample32* inL = data.inputs[0].channelBuffers32[0];
-			Sample32* inR = data.inputs[0].channelBuffers32[1];
+			//Sample32* inL = data.inputs[0].channelBuffers32[0];
+			//Sample32* inR = data.inputs[0].channelBuffers32[1];
 			Sample32* outL = data.outputs[0].channelBuffers32[0];
 			Sample32* outR = data.outputs[0].channelBuffers32[1];
-
 			memset(outL, 0, sizeof(Sample32) * data.numSamples);
 			memset(outR, 0, sizeof(Sample32) * data.numSamples);
 
-			// numSamplesで示されるサンプル分、音声を処理する
 			for (int s = 0; s < SAMPLER_COUNT; s++) {
-				auto pSmpl = gppSamplers[s];
-				if (pSmpl->state < SAMPLER_STATE::ACTIVE) {
-					break;
-				}
-				for (int32 i = 0; i < data.numSamples; i++) {
-					pSmpl->re -= pSmpl->im * pSmpl->delta * 6.28;
-					pSmpl->im += pSmpl->re * pSmpl->delta * 6.28;
-					outL[i] += pSmpl->re * pSmpl->gain;
-					outR[i] += pSmpl->im * pSmpl->gain;
-				}
+				Sampler::List[s]->Step(data);
+			}
+			for (int c = 0; c < CHANNEL_COUNT; c++) {
+				Channel::List[c]->Step(data);
 			}
 
 			// 問題なければkResultTrueを返す(おそらく必ずkResultTrueを返す)
@@ -205,18 +191,18 @@ namespace Steinberg {
 
 		void MyVSTProcessor::onNoteOn(int channel, int note, float velocity) {
 			// MIDIノートオンイベントの処理を行う
-			//if (0 == velocity) {
-			//	onNoteOff(channel, note, velocity);
-			//	return;
-			//}
+			if (0 == velocity) {
+				onNoteOff(channel, note, velocity);
+				return;
+			}
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
-				auto pSmpl = gppSamplers[i];
+				auto pSmpl = Sampler::List[i];
 				if (pSmpl->channelNumber == channel && pSmpl->noteNumber == note && SAMPLER_STATE::ACTIVE <= pSmpl->state) {
-					pSmpl->state = SAMPLER_STATE::PURGE;
+					pSmpl->state = SAMPLER_STATE::FREE;
 				}
 			}
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
-				auto pSmpl = gppSamplers[i];
+				auto pSmpl = Sampler::List[i];
 				if (pSmpl->state == SAMPLER_STATE::FREE) {
 					pSmpl->state = SAMPLER_STATE::RESERVED;
 					pSmpl->channelNumber = channel;
@@ -224,7 +210,7 @@ namespace Steinberg {
 					// 押されたノートから、音程を計算
 					// ノートNo.69が440Hzになる。これを基準に計算する。
 					// 計算式の詳細説明については割愛
-					pSmpl->delta = (440.0f * powf(2.0f, (float)(note - (69)) / 12.0) / 44100.0f);
+					pSmpl->delta = (440.0f * powf(2.0f, (float)(note - (69)) / 12.0) / processSetup.sampleRate);
 					pSmpl->gain = velocity;
 					pSmpl->state = SAMPLER_STATE::ACTIVE;
 					break;
@@ -235,7 +221,7 @@ namespace Steinberg {
 		void MyVSTProcessor::onNoteOff(int channel, int note, float velocity) {
 			// MIDIノートオフイベントの処理を行う
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
-				auto pSmpl = gppSamplers[i];
+				auto pSmpl = Sampler::List[i];
 				if (pSmpl->channelNumber == channel && pSmpl->noteNumber == note) {
 					pSmpl->state = SAMPLER_STATE::FREE;
 				}

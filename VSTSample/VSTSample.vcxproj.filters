@@ -13,6 +13,12 @@
     <ClCompile Include="processor.cpp">
       <Filter>ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="sampler.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="channel.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="controller.h">

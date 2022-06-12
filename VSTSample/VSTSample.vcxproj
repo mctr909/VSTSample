@@ -156,9 +156,11 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\..\..\..\VST_SDK\vst3sdk\public.sdk\source\main\dllmain.cpp" />
+    <ClCompile Include="channel.cpp" />
     <ClCompile Include="controller.cpp" />
     <ClCompile Include="factory.cpp" />
     <ClCompile Include="processor.cpp" />
+    <ClCompile Include="sampler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="channel.h" />

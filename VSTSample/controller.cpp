@@ -53,7 +53,6 @@ namespace Steinberg {
 
 		tresult PLUGIN_API MyVSTController::getMidiControllerAssignment(int32 busIndex, int16 channel, CtrlNumber midiControllerNumber, ParamID& id)
 		{
-
 			// midiControllerNumberに関係付けたいパラメータータグ(ID)をidに代入することで
 			// MIDIコントロールチェンジとパラメーターを関連付ける
 			// イベントバスやMIDIチャンネルに応じて関連付けを変更したい場合は

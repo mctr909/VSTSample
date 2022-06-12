@@ -6,53 +6,52 @@ namespace Steinberg {
         Sampler *Sampler::List[SAMPLER_COUNT] = { NULL };
 
         void Sampler::Step(ProcessData& data) {
-            if (state < SAMPLER_STATE::PRESS) {
+            if (State < SAMPLER_STATE::PRESS) {
                 return;
             }
 
-            Channel *pCh = Channel::List[channelNumber];
+            Channel *pCh = Channel::List[ChannelNumber];
             double* pWaveL = pCh->pWaveL;
             double* pWaveR = pCh->pWaveR;
             int writeIndex = pCh->WriteIndex;
 
             for (int32 i = 0; i < data.numSamples; i++) {
                 /* generate envelope */
-                switch (state) {
+                switch (State) {
                 case SAMPLER_STATE::PRESS:
-                    if (time < 0.002) {
-                        curAmp += (1 - curAmp) * 500 * delta;
+                    if (Time < pCh->AmpAttack) {
+                        CurAmp += (1.0 - CurAmp) * Delta / pCh->AmpAttack;
                     } else {
-                        curAmp += (0.33 - curAmp) * 20 * delta;
+                        CurAmp += (pCh->AmpSustain - CurAmp) * Delta / pCh->AmpDecay;
                     }
                     break;
                 case SAMPLER_STATE::HOLD:
-                    curAmp -= curAmp * delta;
+                    CurAmp -= CurAmp * Delta;
                     break;
                 case SAMPLER_STATE::RELEASE:
-                    curAmp -= curAmp * 500 * delta;
+                    CurAmp -= CurAmp * Delta / pCh->AmpRelease;
                     break;
                 case SAMPLER_STATE::PURGE:
-                    curAmp -= curAmp * 500 * delta;
-                    break;
                 default:
+                    CurAmp -= CurAmp * Delta / 0.001;
                     break;
                 }
-
-                if (curAmp < 0.0005) {
-                    state = SAMPLER_STATE::FREE;
+                
+                if (CurAmp < 0.0005) {
+                    State = SAMPLER_STATE::FREE;
                     break;
                 }
 
                 /* generate wave */
-                re -= im * 6.28 * pitch * delta;
-                im += re * 6.28 * pitch * delta;
+                re -= im * 6.28 * Pitch * Delta;
+                im += re * 6.28 * Pitch * Delta;
 
                 /* output */
-                pWaveL[writeIndex] += re * curAmp * gain;
-                pWaveR[writeIndex] += im * curAmp * gain;
+                pWaveL[writeIndex] += re * CurAmp * Gain;
+                pWaveR[writeIndex] += im * CurAmp * Gain;
 
                 /* update time */
-                time += delta;
+                Time += Delta;
                 writeIndex++;
                 if (BUFF_SIZE <= writeIndex) {
                     writeIndex -= BUFF_SIZE;

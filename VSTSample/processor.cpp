@@ -210,25 +210,25 @@ namespace Steinberg {
 			}
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
 				auto pSmpl = Sampler::List[i];
-				if (pSmpl->channelNumber == channel && pSmpl->noteNumber == note && SAMPLER_STATE::PRESS <= pSmpl->state) {
-					pSmpl->state = SAMPLER_STATE::PURGE;
+				if (pSmpl->ChannelNumber == channel && pSmpl->NoteNumber == note && SAMPLER_STATE::PRESS <= pSmpl->State) {
+					pSmpl->State = SAMPLER_STATE::PURGE;
 				}
 			}
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
 				auto pSmpl = Sampler::List[i];
-				if (pSmpl->state == SAMPLER_STATE::FREE) {
-					pSmpl->state = SAMPLER_STATE::RESERVED;
-					pSmpl->channelNumber = channel;
-					pSmpl->noteNumber = note;
+				if (pSmpl->State == SAMPLER_STATE::FREE) {
+					pSmpl->State = SAMPLER_STATE::RESERVED;
+					pSmpl->ChannelNumber = channel;
+					pSmpl->NoteNumber = note;
 					// 押されたノートから、音程を計算
 					// ノートNo.69が440Hzになる。これを基準に計算する。
 					// 計算式の詳細説明については割愛
-					pSmpl->pitch = 440.0 * pow(2.0f, (note - 69) / 12.0);
-					pSmpl->delta = 1.0 / processSetup.sampleRate;
-					pSmpl->gain = velocity;
-					pSmpl->curAmp = 0.001;
-					pSmpl->time = 0.0;
-					pSmpl->state = SAMPLER_STATE::PRESS;
+					pSmpl->Pitch = 440.0 * pow(2.0f, (note - 69) / 12.0);
+					pSmpl->Delta = 1.0 / processSetup.sampleRate;
+					pSmpl->Gain = velocity;
+					pSmpl->CurAmp = 0.001;
+					pSmpl->Time = 0.0;
+					pSmpl->State = SAMPLER_STATE::PRESS;
 					break;
 				}
 			}
@@ -238,8 +238,8 @@ namespace Steinberg {
 			// MIDIノートオフイベントの処理を行う
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
 				auto pSmpl = Sampler::List[i];
-				if (pSmpl->channelNumber == channel && pSmpl->noteNumber == note) {
-					pSmpl->state = SAMPLER_STATE::RELEASE;
+				if (pSmpl->ChannelNumber == channel && pSmpl->NoteNumber == note) {
+					pSmpl->State = SAMPLER_STATE::RELEASE;
 				}
 			}
 		}

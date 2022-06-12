@@ -22,10 +22,17 @@ namespace Steinberg {
             ParamValue Vol = 0.0;
             ParamValue Exp = 0.0;
             ParamValue Pan = 0.0;
+
+            ParamValue Pitch = 1.0;
+            ParamValue BendRange = 2;
+
+            ParamValue AmpAttack = 0.001;
+            ParamValue AmpDecay = 0.05;
+            ParamValue AmpSustain = 0.33;
+            ParamValue AmpRelease = 0.001;
+
             double PanL = 0.0;
             double PanR = 0.0;
-            double Pitch = 1.0;
-            int BendRange = 2;
             int WriteIndex = 0;
             double* pWaveL = NULL;
             double* pWaveR = NULL;

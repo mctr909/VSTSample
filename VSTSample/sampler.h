@@ -23,16 +23,17 @@ namespace Steinberg {
             static Sampler* List[SAMPLER_COUNT];
 
         public:
-            SAMPLER_STATE state = SAMPLER_STATE::FREE;
-            int channelNumber = 0;
-            int noteNumber = 0;
-            double pitch = 1.0;
-            double delta = 1.0;
-            double gain = 1.0;
+            SAMPLER_STATE State = SAMPLER_STATE::FREE;
+            int ChannelNumber = 0;
+            int NoteNumber = 0;
+            double Pitch = 1.0;
+            double Delta = 1.0;
+            double Gain = 1.0;
+            double CurAmp = 0.0;
+            double Time = 0.0;
+
             double re = 0.0;
             double im = 0.2;
-            double curAmp = 0.0;
-            double time = 0.0;
 
         public:
             void Step(ProcessData& data);

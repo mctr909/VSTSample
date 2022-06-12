@@ -33,6 +33,8 @@ namespace Steinberg {
 				addEventInput(STR16("Event Input"), 1);
 
 				// 以下固有の初期化を実施。
+				Channel::Setup = &processSetup;
+				Sampler::Setup = &processSetup;
 				for (int i = 0; i < CHANNEL_COUNT; i++) {
 					Channel::List[i] = new Channel();
 				}
@@ -75,7 +77,7 @@ namespace Steinberg {
 			// 保存されているデータを読み込む
 			// 保存されているデータが複数ある場合はstate->readを繰り返す
 			tresult res;
-			res = state->read(&masterVolume, sizeof(ParamValue));
+			res = state->read(&Channel::MasterVolume, sizeof(ParamValue));
 			if (res != kResultOk) {
 				// 読込に失敗した場合はkResultFalseを返す。
 				return kResultFalse;
@@ -91,7 +93,7 @@ namespace Steinberg {
 
 			// データを保存する
 			// 保存したいデータが複数ある場合はstate->writeを繰り返す。
-			state->write(&masterVolume, sizeof(ParamValue));
+			state->write(&Channel::MasterVolume, sizeof(ParamValue));
 
 			// 関数の処理に問題がなければkResultOkを返す
 			return kResultOk;
@@ -126,25 +128,7 @@ namespace Steinberg {
 						// 最後に変更された値を取得
 						if (queue->getPoint(valueChangeCount - 1, sampleOffset, value) == kResultTrue) {
 							// tagに応じた処理を実施
-							Channel *pCh;
-							switch (tag & PARAM_TAG_MASK) {
-							case PARAM_TAG_MASTER_VOLUME:
-								// volumeはメンバー変数としてあらかじめ定義・初期化しておく。
-								masterVolume = value;
-								break;
-							case PARAM_TAG_CHANNEL_VOL:
-								Channel::List[tag & 0xFF]->Vol = value;
-								break;
-							case PARAM_TAG_CHANNEL_EXP:
-								Channel::List[tag & 0xFF]->Exp = value;
-								break;
-							case PARAM_TAG_CHANNEL_PAN:
-								pCh = Channel::List[tag & 0xFF];
-								pCh->Pan = value;
-								pCh->PanL = cos(1.57 * value);
-								pCh->PanR = sin(1.57 * value);
-								break;
-							}
+							Channel::List[tag & PARAM_TAG_CHANNEL_MASK]->CtrlChange(tag, value);
 						}
 					}
 				}
@@ -169,7 +153,6 @@ namespace Steinberg {
 							channel = event.noteOn.channel;
 							onNoteOn(channel, event.noteOn.pitch, event.noteOn.velocity);
 							break;
-
 						case Event::kNoteOffEvent: // ノートオフイベントの場合
 							channel = event.noteOff.channel;
 							onNoteOff(channel, event.noteOff.pitch, event.noteOff.velocity);
@@ -217,18 +200,7 @@ namespace Steinberg {
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
 				auto pSmpl = Sampler::List[i];
 				if (pSmpl->State == SAMPLER_STATE::FREE) {
-					pSmpl->State = SAMPLER_STATE::RESERVED;
-					pSmpl->ChannelNumber = channel;
-					pSmpl->NoteNumber = note;
-					// 押されたノートから、音程を計算
-					// ノートNo.69が440Hzになる。これを基準に計算する。
-					// 計算式の詳細説明については割愛
-					pSmpl->Pitch = 440.0 * pow(2.0f, (note - 69) / 12.0);
-					pSmpl->Delta = 1.0 / processSetup.sampleRate;
-					pSmpl->Gain = velocity;
-					pSmpl->CurAmp = 0.001;
-					pSmpl->Time = 0.0;
-					pSmpl->State = SAMPLER_STATE::PRESS;
+					pSmpl->NoteOn(channel, note, velocity);
 					break;
 				}
 			}

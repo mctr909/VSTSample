@@ -11,11 +11,7 @@ namespace Steinberg {
 		// ===================================================================================
 		// 音声信号を処理するProcessorクラス
 		// ===================================================================================
-		class MyVSTProcessor : public AudioEffect
-		{
-		protected:
-			ParamValue masterVolume = {0};
-
+		class MyVSTProcessor : public AudioEffect {
 		public:
 			// コンストラクタ
 			MyVSTProcessor();
@@ -36,13 +32,11 @@ namespace Steinberg {
 			// 音声信号を処理する関数(必須)
 			tresult PLUGIN_API process(ProcessData& data);
 
-			// 自作関数
-			// MIDIノートオンイベント、MIDIノートオフイベントを受け取った場合に処理する関数
-			virtual void onNoteOn(int channel, int note, float velocity);
-			virtual void onNoteOff(int channel, int note, float velocity);
-
 			// 自作VST Processorクラスのインスタンスを作成するための関数(必須)
 			static FUnknown* createInstance(void*) { return (IAudioProcessor*)new MyVSTProcessor(); }
+
+			void onNoteOn(int channel, int note, float velocity);
+			void onNoteOff(int channel, int note, float velocity);
 		};
 
 	}

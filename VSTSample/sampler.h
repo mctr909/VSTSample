@@ -20,22 +20,25 @@ namespace Steinberg {
 
         class Sampler {
         public:
+            static ProcessSetup* Setup;
             static Sampler* List[SAMPLER_COUNT];
 
-        public:
-            SAMPLER_STATE State = SAMPLER_STATE::FREE;
-            int ChannelNumber = 0;
-            int NoteNumber = 0;
-            double Pitch = 1.0;
-            double Delta = 1.0;
-            double Gain = 1.0;
-            double CurAmp = 0.0;
-            double Time = 0.0;
+        private:
+            double mPitch = 1.0;
+            double mGain = 1.0;
+            double mCurAmp = 0.0;
+            double mTime = 0.0;
 
             double re = 0.0;
             double im = 0.2;
 
         public:
+            SAMPLER_STATE State = SAMPLER_STATE::FREE;
+            int ChannelNumber = 0;
+            int NoteNumber = 0;
+
+        public:
+            void NoteOn(int channel, int noteNumber, float velocity);
             void Step(ProcessData& data);
         };
     }

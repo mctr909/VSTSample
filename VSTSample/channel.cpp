@@ -3,15 +3,14 @@
 
 namespace Steinberg {
     namespace Vst {
+        ProcessSetup* Channel::Setup = NULL;
         Channel* Channel::List[CHANNEL_COUNT] = { NULL };
+        ParamValue Channel::MasterVolume = 0.75;
 
         Channel::Channel() {
             pWaveL = (double*)calloc(BUFF_SIZE, sizeof(double));
             pWaveR = (double*)calloc(BUFF_SIZE, sizeof(double));
             Reset();
-            mCurAmp = Vol * Exp;
-            mCurPanL = PanL;
-            mCurPanR = PanR;
         }
 
         Channel::~Channel() {
@@ -22,10 +21,33 @@ namespace Steinberg {
         void Channel::Reset() {
             Vol = 100 / 127.0;
             Exp = 100 / 127.0;
-            PanL = 0.702;
-            PanR = 0.702;
+            mPanL = 0.702;
+            mPanR = 0.702;
             Pitch = 1.0;
             BendRange = 2;
+
+            mCurAmp = Vol * Exp;
+            mCurPanL = mPanL;
+            mCurPanR = mPanR;
+        }
+
+        void Channel::CtrlChange(int32 tag, ParamValue value) {
+            switch (tag & PARAM_TAG_MASK) {
+            case PARAM_TAG_MASTER_VOLUME:
+                MasterVolume = value;
+                break;
+            case PARAM_TAG_CHANNEL_VOL:
+                Vol = value;
+                break;
+            case PARAM_TAG_CHANNEL_EXP:
+                Exp = value;
+                break;
+            case PARAM_TAG_CHANNEL_PAN:
+                Pan = value;
+                mPanL = cos(1.57 * value);
+                mPanR = sin(1.57 * value);
+                break;
+            }
         }
 
         void Channel::Step(ProcessData& data) {
@@ -36,9 +58,9 @@ namespace Steinberg {
                 outL[i] += pWaveL[WriteIndex] * mCurAmp * mCurPanL;
                 outR[i] += pWaveR[WriteIndex] * mCurAmp * mCurPanR;
 
-                mCurAmp += (Vol * Exp - mCurAmp) * 0.01;
-                mCurPanL += (PanL - mCurPanL) * 0.01;
-                mCurPanR += (PanR - mCurPanR) * 0.01;
+                mCurAmp += (Vol * Exp * MasterVolume - mCurAmp) * 0.01;
+                mCurPanL += (mPanL - mCurPanL) * 0.01;
+                mCurPanR += (mPanR - mCurPanR) * 0.01;
 
                 pWaveL[WriteIndex] = 0.0;
                 pWaveR[WriteIndex] = 0.0;

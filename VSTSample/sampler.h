@@ -12,7 +12,7 @@ namespace Steinberg {
         enum struct SAMPLER_STATE {
             FREE,
             RESERVED,
-            ACTIVE,
+            PRESS,
             HOLD,
             RELEASE,
             PURGE
@@ -26,10 +26,13 @@ namespace Steinberg {
             SAMPLER_STATE state = SAMPLER_STATE::FREE;
             int channelNumber = 0;
             int noteNumber = 0;
+            double pitch = 1.0;
             double delta = 1.0;
             double gain = 1.0;
             double re = 0.0;
-            double im = 0.01;
+            double im = 0.2;
+            double curAmp = 0.0;
+            double time = 0.0;
 
         public:
             void Step(ProcessData& data);

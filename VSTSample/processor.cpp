@@ -210,8 +210,8 @@ namespace Steinberg {
 			}
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
 				auto pSmpl = Sampler::List[i];
-				if (pSmpl->channelNumber == channel && pSmpl->noteNumber == note && SAMPLER_STATE::ACTIVE <= pSmpl->state) {
-					pSmpl->state = SAMPLER_STATE::FREE;
+				if (pSmpl->channelNumber == channel && pSmpl->noteNumber == note && SAMPLER_STATE::PRESS <= pSmpl->state) {
+					pSmpl->state = SAMPLER_STATE::PURGE;
 				}
 			}
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
@@ -223,9 +223,12 @@ namespace Steinberg {
 					// ‰Ÿ‚³‚ê‚½ƒm[ƒg‚©‚çA‰¹’ö‚ðŒvŽZ
 					// ƒm[ƒgNo.69‚ª440Hz‚É‚È‚éB‚±‚ê‚ðŠî€‚ÉŒvŽZ‚·‚éB
 					// ŒvŽZŽ®‚ÌÚ×à–¾‚É‚Â‚¢‚Ä‚ÍŠ„ˆ¤
-					pSmpl->delta = (440.0f * powf(2.0f, (float)(note - (69)) / 12.0) / processSetup.sampleRate);
+					pSmpl->pitch = 440.0 * pow(2.0f, (note - 69) / 12.0);
+					pSmpl->delta = 1.0 / processSetup.sampleRate;
 					pSmpl->gain = velocity;
-					pSmpl->state = SAMPLER_STATE::ACTIVE;
+					pSmpl->curAmp = 0.001;
+					pSmpl->time = 0.0;
+					pSmpl->state = SAMPLER_STATE::PRESS;
 					break;
 				}
 			}
@@ -236,7 +239,7 @@ namespace Steinberg {
 			for (int i = 0; i < SAMPLER_COUNT; i++) {
 				auto pSmpl = Sampler::List[i];
 				if (pSmpl->channelNumber == channel && pSmpl->noteNumber == note) {
-					pSmpl->state = SAMPLER_STATE::FREE;
+					pSmpl->state = SAMPLER_STATE::RELEASE;
 				}
 			}
 		}

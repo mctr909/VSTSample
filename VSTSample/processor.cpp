@@ -126,10 +126,23 @@ namespace Steinberg {
 						// 最後に変更された値を取得
 						if (queue->getPoint(valueChangeCount - 1, sampleOffset, value) == kResultTrue) {
 							// tagに応じた処理を実施
-							switch (tag) {
+							Channel *pCh;
+							switch (tag & PARAM_TAG_MASK) {
 							case PARAM_TAG_MASTER_VOLUME:
 								// volumeはメンバー変数としてあらかじめ定義・初期化しておく。
 								masterVolume = value;
+								break;
+							case PARAM_TAG_CHANNEL_VOL:
+								Channel::List[tag & 0xFF]->Vol = value;
+								break;
+							case PARAM_TAG_CHANNEL_EXP:
+								Channel::List[tag & 0xFF]->Exp = value;
+								break;
+							case PARAM_TAG_CHANNEL_PAN:
+								pCh = Channel::List[tag & 0xFF];
+								pCh->Pan = value;
+								pCh->PanL = cos(1.57 * value);
+								pCh->PanR = sin(1.57 * value);
 								break;
 							}
 						}

@@ -19,8 +19,9 @@ namespace Steinberg {
             double mCurPanR = 0.0;
 
         public:
-            double Vol = 0.0;
-            double Exp = 0.0;
+            ParamValue Vol = 0.0;
+            ParamValue Exp = 0.0;
+            ParamValue Pan = 0.0;
             double PanL = 0.0;
             double PanR = 0.0;
             double Pitch = 1.0;
@@ -33,7 +34,6 @@ namespace Steinberg {
             Channel();
             ~Channel();
             void Reset();
-            void CtrlChange(uint8 type, int8 data1, int8 data2);
             void Step(ProcessData& data);
         };
     }

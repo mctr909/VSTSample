@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <math.h>
 #include "channel.h"
 
 namespace Steinberg {
@@ -27,23 +26,6 @@ namespace Steinberg {
             PanR = 0.702;
             Pitch = 1.0;
             BendRange = 2;
-        }
-
-        void Channel::CtrlChange(uint8 type, int8 data1, int8 data2) {
-            switch (type) {
-            case 7:
-                Vol = data1 / 127.0;
-                break;
-            case 10:
-                PanL = cos(1.57 * (data1 + 0.5) / 128.0);
-                PanR = sin(1.57 * (data1 + 0.5) / 128.0);
-                break;
-            case 11:
-                Exp = data1 / 127.0;
-                break;
-            default:
-                break;
-            }
         }
 
         void Channel::Step(ProcessData& data) {

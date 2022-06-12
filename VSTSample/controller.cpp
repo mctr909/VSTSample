@@ -15,10 +15,15 @@ namespace Steinberg {
 			if (result == kResultTrue)
 			{
 				// パラメーターを追加
-				parameters.addParameter(STR16("param1"), STR16("..."), 0, 1, ParameterInfo::kCanAutomate, PARAM_TAG_MASTER_VOLUME);
+				parameters.addParameter(STR16("Master Volume"), STR16("..."), 0, 1, ParameterInfo::kCanAutomate, PARAM_TAG_MASTER_VOLUME);
+
+				for (int c = 0; c < CHANNEL_COUNT; c++) {
+					parameters.addParameter(STR16("Ch Vol."), STR16("..."), 128, 1, ParameterInfo::kCanAutomate, PARAM_TAG_CHANNEL_VOL + c);
+					parameters.addParameter(STR16("Ch Exp."), STR16("..."), 128, 1, ParameterInfo::kCanAutomate, PARAM_TAG_CHANNEL_EXP + c);
+					parameters.addParameter(STR16("Ch Pan"), STR16("..."), 128, 1, ParameterInfo::kCanAutomate, PARAM_TAG_CHANNEL_PAN + c);
+				}
 
 				// 以下固有の初期化を実施。
-
 				// 今回は何もしない
 			}
 
@@ -60,8 +65,13 @@ namespace Steinberg {
 			switch (midiControllerNumber)
 			{
 			case kCtrlVolume:
+				id = PARAM_TAG_CHANNEL_VOL + channel;
 				return kResultTrue;
 			case kCtrlExpression:
+				id = PARAM_TAG_CHANNEL_EXP + channel;
+				return kResultTrue;
+			case kCtrlPan:
+				id = PARAM_TAG_CHANNEL_PAN + channel;
 				return kResultTrue;
 			}
 

@@ -20,6 +20,15 @@ public:
         uint8* data;
     } CHUNK;
 
+    typedef struct WAVE_FMT {
+        uint16 tag;
+        uint16 channels;
+        uint32 sampleRate;
+        uint32 bytesPerSec;
+        uint16 blockAlign;
+        uint16 bits;
+    } WAVE_FMT;
+
 private:
     const char RIFF_ID[4] = { 'R', 'I', 'F', 'F' };
     const char LIST_ID[4] = { 'L', 'I', 'S', 'T' };
@@ -41,12 +50,12 @@ public:
     void AddInfo(const char *id, FILE *fp, uint32 size);
     uint8* AddChunk(const char *id, uint8 *data, uint32 size);
     uint8* AddChunk(const char *id, FILE *fp, uint32 size);
+    void RemoveChunk(const char *id);
 
 protected:
     void Load(wchar_t *path);
     void Load(FILE *fp, uint32 size);
     uint32 Write(FILE *fp);
-    virtual void WriteChunk() { }
     virtual bool CheckFile(char *type);
     virtual void LoadChunk(FILE *fp, char *type, uint32 size);
     virtual void LoadInfo(FILE *fp, char *type, uint32 size);

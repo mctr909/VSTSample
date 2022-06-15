@@ -92,6 +92,7 @@ uint8* RIFF::AddChunk(const char *id, uint8 *data, uint32 size) {
         if (0 == memcmp(id, Chunks[i].id, 4)) {
             free(Chunks[i].data);
             old_chunk = &Chunks[i];
+            break;
         }
     }
 
@@ -116,6 +117,7 @@ uint8* RIFF::AddChunk(const char *id, FILE *fp, uint32 size) {
         if (0 == memcmp(id, Chunks[i].id, 4)) {
             free(Chunks[i].data);
             old_chunk = &Chunks[i];
+            break;
         }
     }
 
@@ -132,6 +134,22 @@ uint8* RIFF::AddChunk(const char *id, FILE *fp, uint32 size) {
     }
 
     return chunk.data;
+}
+
+void RIFF::RemoveChunk(const char *id) {
+    CHUNK *old_chunk = NULL;
+    std::vector<RIFF::CHUNK> tmp;
+    for (uint32 i = 0; i < Chunks.size(); i++) {
+        if (0 == memcmp(id, Chunks[i].id, 4)) {
+            free(Chunks[i].data);
+        } else {
+            tmp.push_back(Chunks[i]);
+        }
+    }
+    Chunks.clear();
+    for (uint32 i = 0; i < tmp.size(); i++) {
+        Chunks.push_back(tmp[i]);
+    }
 }
 
 void RIFF::Load(wchar_t *path) {
@@ -240,7 +258,6 @@ void RIFF::loadInfo(FILE *fp, uint32 size) {
 }
 
 uint32 RIFF::writeChunk(FILE *fp) {
-    WriteChunk();
     uint32 size = 0;
     for (uint32 i = 0; i < Chunks.size(); i++) {
         auto ck = Chunks[i];

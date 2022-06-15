@@ -19,6 +19,12 @@
     <ClCompile Include="channel.cpp">
       <Filter>ソースファイル</Filter>
     </ClCompile>
+    <ClCompile Include="dls.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
+    <ClCompile Include="riff.cpp">
+      <Filter>ソースファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="controller.h">
@@ -37,6 +43,15 @@
       <Filter>ヘッダファイル</Filter>
     </ClInclude>
     <ClInclude Include="sampler.h">
+      <Filter>ヘッダファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="dls.h">
+      <Filter>ヘッダファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="dls_struct.h">
+      <Filter>ヘッダファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="riff.h">
       <Filter>ヘッダファイル</Filter>
     </ClInclude>
   </ItemGroup>

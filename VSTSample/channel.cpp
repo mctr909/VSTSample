@@ -7,7 +7,9 @@ namespace Steinberg {
         Channel* Channel::List[CHANNEL_COUNT] = { NULL };
         ParamValue Channel::MasterVolume = 0.75;
 
-        Channel::Channel() {
+        Channel::Channel(uint8 number) {
+            Number = number;
+            pInst = DLS::Instance->GetInst(9 == number, 0, 0, 0);
             pWaveL = (double*)calloc(BUFF_SIZE, sizeof(double));
             pWaveR = (double*)calloc(BUFF_SIZE, sizeof(double));
             Reset();

@@ -8,15 +8,34 @@ namespace Steinberg {
 
         void Sampler::NoteOn(int channel, int noteNumber, float velocity) {
             State = SAMPLER_STATE::RESERVED;
+            Channel* pCh = Channel::List[channel];
             ChannelNumber = channel;
             NoteNumber = noteNumber;
-            // ‰Ÿ‚³‚ê‚½ƒm[ƒg‚©‚çA‰¹’ö‚ðŒvŽZ
-            // ƒm[ƒgNo.69‚ª440Hz‚É‚È‚éB‚±‚ê‚ðŠî€‚ÉŒvŽZ‚·‚éB
-            // ŒvŽZŽ®‚ÌÚ×à–¾‚É‚Â‚¢‚Ä‚ÍŠ„ˆ¤
-            mPitch = 440.0 * pow(2.0f, (noteNumber - 69) / 12.0);
+            auto rgns = pCh->pInst->GetRegions(noteNumber, (uint8)(127 * velocity));
+            if (0 == rgns.size()) {
+                State = SAMPLER_STATE::FREE;
+                return;
+            }
+            auto rgn = rgns[0];
+            auto wave = DLS::Instance->GetWave(rgn);
+            mpWave = wave->pWave;
+            if (wave->pLoop) {
+                mLoopBegin = wave->pLoop->start;
+                mLoopLength = wave->pLoop->length;
+                mLoopEnable = true;
+            } else {
+                mLoopBegin = 0;
+                mLoopLength = wave->Size / 2;
+                mLoopEnable = false;
+            }
             mGain = velocity;
+            auto note_diff = noteNumber - wave->pWsmp->unityNote;
+            mPitch = pow(2.0f, note_diff / 12.0);
+            mPitch *= wave->pWsmp->getFineTune();
+            mPitch *= wave->pFmt->sampleRate / OVER_SAMPLING;
             mCurAmp = 0.001;
             mTime = 0.0;
+            mIndex = 0.0;
             State = SAMPLER_STATE::PRESS;
         }
 
@@ -45,7 +64,10 @@ namespace Steinberg {
                     mCurAmp -= mCurAmp * delta;
                     break;
                 case SAMPLER_STATE::RELEASE:
-                    mCurAmp -= mCurAmp * delta / pCh->AmpRelease;
+                    if (ChannelNumber == 9 && !mLoopEnable) {
+                    } else {
+                        mCurAmp -= mCurAmp * delta / pCh->AmpRelease;
+                    }
                     break;
                 case SAMPLER_STATE::PURGE:
                 default:
@@ -59,12 +81,26 @@ namespace Steinberg {
                 }
 
                 /* generate wave */
-                re -= im * 6.28 * mPitch * delta;
-                im += re * 6.28 * mPitch * delta;
+                double smoothedWave = 0.0;
+                for (int o = 0; o < OVER_SAMPLING; o++) {
+                    auto iIdx = (int32)mIndex;
+                    auto di = mIndex - iIdx;
+                    smoothedWave += mpWave[iIdx - 1] * (1.0 - di) + mpWave[iIdx] * di;
+                    mIndex += mPitch * delta;
+                    if ((mLoopBegin + mLoopLength) < mIndex) {
+                        if (mLoopEnable) {
+                            mIndex -= mLoopLength;
+                        } else {
+                            State = SAMPLER_STATE::FREE;
+                            break;
+                        }
+                    }
+                }
+                smoothedWave *= 1 / 32768.0 / OVER_SAMPLING;
 
                 /* output */
-                pWaveL[writeIndex] += re * mCurAmp * mGain;
-                pWaveR[writeIndex] += im * mCurAmp * mGain;
+                pWaveL[writeIndex] += smoothedWave * mCurAmp * mGain;
+                pWaveR[writeIndex] += smoothedWave * mCurAmp * mGain;
 
                 /* update time */
                 mTime += delta;

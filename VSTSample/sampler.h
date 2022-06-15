@@ -28,9 +28,11 @@ namespace Steinberg {
             double mGain = 1.0;
             double mCurAmp = 0.0;
             double mTime = 0.0;
-
-            double re = 0.0;
-            double im = 0.2;
+            double mIndex = 0.0;
+            int16* mpWave = NULL;
+            uint32 mLoopBegin = 0;
+            uint32 mLoopLength = 0;
+            bool mLoopEnable = false;
 
         public:
             SAMPLER_STATE State = SAMPLER_STATE::FREE;

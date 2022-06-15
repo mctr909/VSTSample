@@ -23,7 +23,7 @@
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{aa82a209-0fd1-4273-9319-9636811b3888}</ProjectGuid>
     <RootNamespace>VSTSample</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.19041.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -158,16 +158,21 @@
     <ClCompile Include="..\..\..\..\..\..\VST_SDK\vst3sdk\public.sdk\source\main\dllmain.cpp" />
     <ClCompile Include="channel.cpp" />
     <ClCompile Include="controller.cpp" />
+    <ClCompile Include="dls.cpp" />
     <ClCompile Include="factory.cpp" />
     <ClCompile Include="processor.cpp" />
+    <ClCompile Include="riff.cpp" />
     <ClCompile Include="sampler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="channel.h" />
     <ClInclude Include="controller.h" />
+    <ClInclude Include="dls.h" />
+    <ClInclude Include="dls_struct.h" />
     <ClInclude Include="myvst3define.h" />
     <ClInclude Include="myvst3fuid.h" />
     <ClInclude Include="processor.h" />
+    <ClInclude Include="riff.h" />
     <ClInclude Include="sampler.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -5,10 +5,12 @@
 #include "controller.h"
 #include "channel.h"
 #include "sampler.h"
+#include "dls.h"
 
 // VST3作成に必要なの名前空間を使用
 namespace Steinberg {
 	namespace Vst {
+		using Steinberg::DLS;
 
 		// =================================================================================
 		// コンストラクタ
@@ -33,10 +35,11 @@ namespace Steinberg {
 				addEventInput(STR16("Event Input"), 1);
 
 				// 以下固有の初期化を実施。
+				DLS::Instance = new DLS((wchar_t*)STR16("C:\\Users\\user\\Desktop\\gm.dls"));
 				Channel::Setup = &processSetup;
 				Sampler::Setup = &processSetup;
 				for (int i = 0; i < CHANNEL_COUNT; i++) {
-					Channel::List[i] = new Channel();
+					Channel::List[i] = new Channel(i);
 				}
 				for (int i = 0; i < SAMPLER_COUNT; i++) {
 					Sampler::List[i] = new Sampler();

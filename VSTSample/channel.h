@@ -6,6 +6,7 @@
 
 // 自作VST用のインクルードファイル
 #include "myvst3define.h"
+#include "dls.h"
 
 namespace Steinberg {
     namespace Vst {
@@ -23,6 +24,7 @@ namespace Steinberg {
             double mPanR = 0.0;
 
         public:
+            uint8 Number = 0;
             ParamValue Vol = 0.0;
             ParamValue Exp = 0.0;
             ParamValue Pan = 0.0;
@@ -39,8 +41,10 @@ namespace Steinberg {
             double* pWaveL = NULL;
             double* pWaveR = NULL;
 
+            INS_* pInst = NULL;
+
         public:
-            Channel();
+            Channel(uint8 number);
             ~Channel();
             void Reset();
             void CtrlChange(int32 tag, ParamValue value);

@@ -9,3 +9,4 @@
 #define BUFF_SIZE 1024
 #define CHANNEL_COUNT 16
 #define SAMPLER_COUNT 128
+#define OVER_SAMPLING 4

@@ -16,6 +16,7 @@ namespace Steinberg {
                 State = SAMPLER_STATE::FREE;
                 return;
             }
+
             auto rgn = rgns[0];
             auto wave = DLS::Instance->GetWave(rgn);
             mpWave = wave->pWave;
@@ -28,6 +29,47 @@ namespace Steinberg {
                 mLoopLength = wave->Size / 2;
                 mLoopEnable = false;
             }
+
+            AmpAttack = 0.001;
+            AmpDecay = 1.0;
+            AmpRelease = 0.001;
+            AmpSustain = 0.0;
+            if (NULL == rgn->pArtList) {
+                auto count = pCh->pInst->pArtList->Count;
+                auto pConn = pCh->pInst->pArtList->pConn;
+                for (uint32 i = 0; i < count; i++) {
+                    switch (pConn->destination) {
+                    case E_DLS_DST::EG1_ATTACK_TIME:
+                        AmpAttack = pConn->getValue(); break;
+                    case E_DLS_DST::EG1_DECAY_TIME:
+                        AmpDecay = pConn->getValue(); break;
+                    case E_DLS_DST::EG1_RELEASE_TIME:
+                        AmpRelease = pConn->getValue(); break;
+                    case E_DLS_DST::EG1_SUSTAIN_LEVEL:
+                        AmpSustain = pConn->getValue(); break;
+                    default:
+                        break;
+                    }
+                }
+            } else {
+                auto count = rgn->pArtList->Count;
+                auto pConn = rgn->pArtList->pConn;
+                for (uint32 i = 0; i < count; i++) {
+                    switch (pConn->destination) {
+                    case E_DLS_DST::EG1_ATTACK_TIME:
+                        AmpAttack = pConn->getValue(); break;
+                    case E_DLS_DST::EG1_DECAY_TIME:
+                        AmpDecay = pConn->getValue(); break;
+                    case E_DLS_DST::EG1_RELEASE_TIME:
+                        AmpRelease = pConn->getValue(); break;
+                    case E_DLS_DST::EG1_SUSTAIN_LEVEL:
+                        AmpSustain = pConn->getValue(); break;
+                    default:
+                        break;
+                    }
+                }
+            }
+
             mGain = velocity;
             auto note_diff = noteNumber - wave->pWsmp->unityNote;
             mPitch = pow(2.0f, note_diff / 12.0);
@@ -54,20 +96,17 @@ namespace Steinberg {
                 /* generate envelope */
                 switch (State) {
                 case SAMPLER_STATE::PRESS:
-                    if (mTime < pCh->AmpAttack) {
-                        mCurAmp += (1.0 - mCurAmp) * delta / pCh->AmpAttack;
+                    if (mTime < AmpAttack) {
+                        mCurAmp += (1.0 - mCurAmp) * delta / AmpAttack;
                     } else {
-                        mCurAmp += (pCh->AmpSustain - mCurAmp) * delta / pCh->AmpDecay;
+                        mCurAmp += (AmpSustain - mCurAmp) * delta / AmpDecay;
                     }
                     break;
                 case SAMPLER_STATE::HOLD:
                     mCurAmp -= mCurAmp * delta;
                     break;
                 case SAMPLER_STATE::RELEASE:
-                    if (ChannelNumber == 9 && !mLoopEnable) {
-                    } else {
-                        mCurAmp -= mCurAmp * delta / pCh->AmpRelease;
-                    }
+                    mCurAmp -= mCurAmp * delta / AmpRelease;
                     break;
                 case SAMPLER_STATE::PURGE:
                 default:
@@ -96,11 +135,11 @@ namespace Steinberg {
                         }
                     }
                 }
-                smoothedWave *= 1 / 32768.0 / OVER_SAMPLING;
+                smoothedWave *= mCurAmp * mGain / 32768.0 / OVER_SAMPLING;
 
                 /* output */
-                pWaveL[writeIndex] += smoothedWave * mCurAmp * mGain;
-                pWaveR[writeIndex] += smoothedWave * mCurAmp * mGain;
+                pWaveL[writeIndex] += smoothedWave * pCh->CurPanL;
+                pWaveR[writeIndex] += smoothedWave * pCh->CurPanR;
 
                 /* update time */
                 mTime += delta;

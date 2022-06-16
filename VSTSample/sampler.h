@@ -38,6 +38,10 @@ namespace Steinberg {
             SAMPLER_STATE State = SAMPLER_STATE::FREE;
             int ChannelNumber = 0;
             int NoteNumber = 0;
+            double AmpAttack = 0.001;
+            double AmpDecay = 0.05;
+            double AmpSustain = 0.33;
+            double AmpRelease = 0.001;
 
         public:
             void NoteOn(int channel, int noteNumber, float velocity);

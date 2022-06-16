@@ -18,8 +18,6 @@ namespace Steinberg {
 
         private:
             double mCurAmp = 0.0;
-            double mCurPanL = 0.0;
-            double mCurPanR = 0.0;
             double mPanL = 0.0;
             double mPanR = 0.0;
 
@@ -28,18 +26,14 @@ namespace Steinberg {
             ParamValue Vol = 0.0;
             ParamValue Exp = 0.0;
             ParamValue Pan = 0.0;
-
             ParamValue Pitch = 1.0;
             ParamValue BendRange = 2;
-
-            ParamValue AmpAttack = 0.001;
-            ParamValue AmpDecay = 0.05;
-            ParamValue AmpSustain = 0.33;
-            ParamValue AmpRelease = 0.001;
 
             int WriteIndex = 0;
             double* pWaveL = NULL;
             double* pWaveR = NULL;
+            double CurPanL = 0.0;
+            double CurPanR = 0.0;
 
             INS_* pInst = NULL;
 

@@ -167,15 +167,7 @@ typedef struct DLS_CONN {
         case E_DLS_DST::EG2_RELEASE_TIME:
         case E_DLS_DST::EG2_DELAY_TIME:
         case E_DLS_DST::EG2_HOLD_TIME:
-        {
-            auto tmp = pow(2.0, scale / (1200 * 65536.0));
-            if (tmp < 0.001) {
-                return 0.001;
-            }
-            else {
-                return tmp;
-            }
-        }
+            return pow(2.0, scale / (1200 * 65536.0));
 
         case E_DLS_DST::EG1_SUSTAIN_LEVEL:
         case E_DLS_DST::EG2_SUSTAIN_LEVEL:

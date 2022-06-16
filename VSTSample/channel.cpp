@@ -29,8 +29,8 @@ namespace Steinberg {
             BendRange = 2;
 
             mCurAmp = Vol * Exp;
-            mCurPanL = mPanL;
-            mCurPanR = mPanR;
+            CurPanL = mPanL;
+            CurPanR = mPanR;
         }
 
         void Channel::CtrlChange(int32 tag, ParamValue value) {
@@ -57,12 +57,12 @@ namespace Steinberg {
             Sample32* outR = data.outputs[0].channelBuffers32[1];
 
             for (int32 i = 0; i < data.numSamples; i++) {
-                outL[i] += pWaveL[WriteIndex] * mCurAmp * mCurPanL;
-                outR[i] += pWaveR[WriteIndex] * mCurAmp * mCurPanR;
+                outL[i] += pWaveL[WriteIndex] * mCurAmp;
+                outR[i] += pWaveR[WriteIndex] * mCurAmp;
 
                 mCurAmp += (Vol * Exp * MasterVolume - mCurAmp) * 0.01;
-                mCurPanL += (mPanL - mCurPanL) * 0.01;
-                mCurPanR += (mPanR - mCurPanR) * 0.01;
+                CurPanL += (mPanL - CurPanL) * 0.01;
+                CurPanR += (mPanR - CurPanR) * 0.01;
 
                 pWaveL[WriteIndex] = 0.0;
                 pWaveR[WriteIndex] = 0.0;

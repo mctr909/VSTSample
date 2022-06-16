@@ -107,8 +107,7 @@ namespace Steinberg {
 
         if (NULL == old_chunk) {
             Chunks.push_back(chunk);
-        }
-        else {
+        } else {
             memcpy(old_chunk, &chunk, sizeof(chunk));
         }
 
@@ -133,8 +132,7 @@ namespace Steinberg {
 
         if (NULL == old_chunk) {
             Chunks.push_back(chunk);
-        }
-        else {
+        } else {
             memcpy(old_chunk, &chunk, sizeof(chunk));
         }
 
@@ -142,13 +140,11 @@ namespace Steinberg {
     }
 
     void RIFF::RemoveChunk(const char* id) {
-        CHUNK* old_chunk = NULL;
         std::vector<RIFF::CHUNK> tmp;
         for (uint32 i = 0; i < Chunks.size(); i++) {
             if (0 == memcmp(id, Chunks[i].id, 4)) {
                 free(Chunks[i].data);
-            }
-            else {
+            } else {
                 tmp.push_back(Chunks[i]);
             }
         }
